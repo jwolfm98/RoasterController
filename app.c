@@ -16,14 +16,50 @@ TODO:
 #include "roastEvent.h"
 #include "app.h"
 
-#define ZOOM_X 100.0
-#define ZOOM_Y 100.0
+#define RGB_BLACK   0,   0,   0
+#define RGB_RED   255,   0,   0
+#define RGB_GREEN   0, 255,   0
+#define RGB_BLUE    0,   0, 255
+#define RGB_WHITE 255, 255, 255
+
+#define ZOOM_X 1.0
+#define ZOOM_Y 1.0
+
+static long  practiceSeconds = 60 * 13; //15 minutes
+static float bTemps[1200], eTemps[1200], bCommand[1200];
+static float bMin, bMax;
+static long  timeConstraint;
+static long  endOfGraphBuffer = 30; //seconds
+
+static long  tempRangeMin = 150, tempRangeMax = 500;
+static long  deltaTempRangeMin = 0, deltaTempRangeMax = 60;
+static long  timeMax = 60 * 15;
+
 
 RoasterGlobalSettings *rs;
 RoasterDataPoints     *rdp;
 
 double burnCommand = 0.0;
 static long secExpired = 0;
+
+void setupPracticeGraph() {
+  float testVal = 200.0;
+  bMin = 0;
+  bMax = 10;
+  timeConstraint = 4 * 60 + endOfGraphBuffer;
+  for (int i = 0; i <= practiceSeconds; i++) {
+    if (i < 4) {
+      bTemps[i] = -1;
+      eTemps[i] = -1;
+      bCommand[i] = -1;
+    }
+    else {
+      bTemps[i] = testVal + (i * (float)(300.0/practiceSeconds));
+      eTemps[i] = testVal + i + i;
+      bCommand[i] = (float)(testVal + (float)(i / 10.0));
+    }
+  }
+}
 
 /* Main Roasting Event loop
  * This loop is responsible for handling I/O to the hardware, graphing the data received
@@ -48,9 +84,9 @@ gboolean roasterClockUpdate(gpointer data) {
     if (secExpired > (59 + (59 *60))) {
       secExpired = 0;
     }
-    sec = secExpired / 60;
-    min = secExpired % 60;
-    gtk_label_set_label(GTK_LABEL(gtk_lblTime), g_strdup_printf("%02d:%02d", sec, min));
+    sec = secExpired % 60;
+    min = secExpired / 60;
+    gtk_label_set_label(GTK_LABEL(gtk_lblTime), g_strdup_printf("%02d:%02d", min, sec));
   }
   return isRoasting();
 }
@@ -122,49 +158,69 @@ gfloat f(gfloat x) {
   return (0.03 * pow(x,3));
 }
 
+gfloat scaleTemp(long temp, long maxH){
+  /* Get percentage of temperature in relation to the desired visible scale, and multiply
+   * against the total height */
+  return (((float)(maxH / (tempRangeMax - tempRangeMin))) * temp);
+}
+gfloat scaleTime(long time, long scale) {
+  return ((float)(scale / timeMax) * time);
+}
+
 gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
   /* Initialize drawing area */
   GdkRectangle da;
   GdkWindow *window = gtk_widget_get_window(widget);
   /* Pixels between each point */
-  gdouble dx = 5.0, dy = 5.0;
+  gdouble dx = 1.0, dy = 1.0;
   gdouble i, clip_x1 = 0.0, clip_y1 = 0.0, clip_x2 = 0.0, clip_y2 = 0.0;
 
   /* Determine GtkDrawingArea dimensions */
-  gdk_window_get_geometry (window, &da.x, &da.y, &da.width, &da.height);
+  gdk_window_get_geometry(window, &da.x, &da.y, &da.width, &da.height);
+
+  gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("X=%d; Y=%d; Width=%d; Height=%d", da.x, da.y, da.width, da.height));
+
+  //TODO: Scale graphing area to include two columns on the left and right, and a bottom row for the grid lines and text
+  //
+  //
+  //TODO: Color grid label backgrounds to the programs "grey"
+  //
+  //
+  //TODO: Insert grid labels
+  //
+  //
+  //TODO: Color remaining graph area to white
+  //
+  //
+  //TODO: Draw grid lines
+  //
+  //
+  //TODO: Rescale drawing area for grah drawing
+  //
+  //
 
   /* Draw on a black background */
-  cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
-  cairo_paint (cr);
+  cairo_set_source_rgb(cr, RGB_WHITE);
+  cairo_paint(cr);
 
   /* Change the transformation matrix */
-  /* Put originating cooridantes in the bottom left corner of the draw screen (nothing
-   * negative will be displayed) */
-  cairo_translate (cr, 0, da.height);
-  cairo_scale (cr, ZOOM_X, -ZOOM_Y);
+  cairo_translate(cr, 0.0, da.height);
+  cairo_scale(cr, ZOOM_X, -ZOOM_Y);
 
   /* Determine the data points to calculate (ie. those in the clipping zone */
-  cairo_device_to_user_distance (cr, &dx, &dy);
-  cairo_clip_extents (cr, &clip_x1, &clip_y1, &clip_x2, &clip_y2);
-  cairo_set_line_width (cr, dx);
+  cairo_device_to_user_distance(cr, &dx, &dy);
+  cairo_clip_extents(cr, &clip_x1, &clip_y1, &clip_x2, &clip_y2);
+  cairo_set_line_width(cr, 1.0);
 
   /* Draws x and y axis */
-  //TODO: Figure out how to propery scale grid lines.
-  cairo_set_source_rgb (cr, 0.0, 1.0, 0.0);
-  cairo_move_to (cr, 1.0, 1.0);
-  cairo_line_to (cr, 2.0, 2.0);
-  cairo_move_to (cr, 0.0, clip_y1);
-  cairo_line_to (cr, 0.0, clip_y2);
-  cairo_stroke (cr);
-
-  /* Link each data point */
-  for (i = clip_x1; i < clip_x2; i += dx) {
-      cairo_line_to (cr, i, f (i));
+  cairo_set_source_rgb (cr, RGB_GREEN);
+  for (long i = 0; i < practiceSeconds; i++) {
+    if (bTemps[i] != -1) {
+      cairo_move_to(cr, scaleTime(i, da.width), scaleTemp(bTemps[i], da.height));
+      cairo_line_to(cr, scaleTime(i + 1, da.width), scaleTemp(bTemps[i + 1], da.height));
+    }
   }
 
-  /* Draw the curve */
-  cairo_set_source_rgba (cr, 1, 0.2, 0.2, 0.6);
-  cairo_stroke (cr);
   return FALSE;
 }
 
@@ -228,6 +284,9 @@ static void _activate (GtkApplication *app, gpointer userData) {
 
   /* Setup graph drawing signal with initial drawing */
   g_signal_connect(G_OBJECT(gtk_draGraph), "draw", G_CALLBACK(on_draGraph_draw), NULL);
+
+  //TODO: Remove when graph is working.
+  setupPracticeGraph();
 
 }
 
