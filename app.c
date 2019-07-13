@@ -25,6 +25,44 @@ TODO:
 #define ZOOM_X 1.0
 #define ZOOM_Y 1.0
 
+//TODO:
+//
+// Define Axis graphics parameters
+//
+// X Axis is Time
+// Y1 Axis is Temperatures
+// Y2 Axis is Burner Command
+
+// Define width of the gap between the drawing edge and the Axis line,
+// where TEMP_BURN is the gap between the left edge and the start of the TIME line
+// and TIME is the gap between the bottom edge and the start of the TEMP and BURNER lines.
+#define AXIS_GAP_TIME
+#define AXIS_GAP_TEMP_BURN
+
+// Define number of tick lines for each Axis
+#define AXIS_TICKS_TIME
+#define AXIS_TICKS_TEMP
+#define AXIS_TICKS_BURN
+
+// Define graphing area parameters
+
+// Percentage margin for vertical axis
+#define AXIS_MARGIN (0.02)
+
+// Define length of time axis, where X is window width and y is the window height
+#define AXIS_LENGTH_TIME(x)      (x - (AXIS_GAP_TEMP_BURN * 2))
+#define AXIS_LENGTH_TEMP_BURN(y) (y - AXIS_GAP_TIME - (AXIS_MARGIN * y))
+
+struct POINT {
+	long x;
+	long y;
+};
+
+static long timeAxisLength;
+static long tempBurnAxisLength;
+static POINT originPoint; //x is to width as y is to height (of drawing area)
+static POINT endPoint;    //opposite end of graph rectangle
+
 static long  practiceSeconds = 60 * 13; //15 minutes
 static float bTemps[1200], eTemps[1200], bCommand[1200];
 static float bMin, bMax;
@@ -34,7 +72,6 @@ static long  endOfGraphBuffer = 30; //seconds
 static long  tempRangeMin = 150, tempRangeMax = 500;
 static long  deltaTempRangeMin = 0, deltaTempRangeMax = 60;
 static long  timeMax = 60 * 15;
-
 
 RoasterGlobalSettings *rs;
 RoasterDataPoints     *rdp;
@@ -178,14 +215,31 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
   /* Determine GtkDrawingArea dimensions */
   gdk_window_get_geometry(window, &da.x, &da.y, &da.width, &da.height);
 
-  gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("X=%d; Y=%d; Width=%d; Height=%d", da.x, da.y, da.width, da.height));
-
-  //TODO: Scale graphing area to include two columns on the left and right, and a bottom row for the grid lines and text
-  //
-  //
+	//Draw on a white background
   //TODO: Color grid label backgrounds to the programs "grey"
-  //
-  //
+  cairo_set_source_rgb(cr, RGB_WHITE);
+  cairo_paint(cr);
+
+  /* Change the transformation matrix */
+  cairo_translate(cr, 0.0, da.height);
+  cairo_scale(cr, ZOOM_X, -ZOOM_Y);
+  
+	/* Determine the data points to calculate (ie. those in the clipping zone */
+  cairo_device_to_user_distance(cr, &dx, &dy);
+  cairo_set_line_width(cr, 1.0);
+	
+	/* Setup chart data area display dimensions */
+	originPoint.x = AXIS_GAP_TEMP_BURN;
+	originPoint.y = AXIS_GAP_TIME;
+	endPoint.x    = AXIS_LENGTH_TIME(da.width) + originPoint.x;
+	endPoint.y    = AXIS_LENGTH_TEMP_BURN(da.height) + originPoint.y;
+ 
+ //TODO can we assign clip at a later time to ensure the live graph doesn't clip? or is does this need a separate handler?
+	cairo_clip_extents(cr, &clip_x1, &clip_y1, &clip_x2, &clip_y2);
+
+	cairo_set_source_rgb(cr, RGB_BLACK);
+	cairo_rectangle(cr, originPoint.x, originPoint.y, endPoint.x, endPoint.y);
+
   //TODO: Insert grid labels
   //
   //
@@ -199,18 +253,6 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
   //
   //
 
-  /* Draw on a black background */
-  cairo_set_source_rgb(cr, RGB_WHITE);
-  cairo_paint(cr);
-
-  /* Change the transformation matrix */
-  cairo_translate(cr, 0.0, da.height);
-  cairo_scale(cr, ZOOM_X, -ZOOM_Y);
-
-  /* Determine the data points to calculate (ie. those in the clipping zone */
-  cairo_device_to_user_distance(cr, &dx, &dy);
-  cairo_clip_extents(cr, &clip_x1, &clip_y1, &clip_x2, &clip_y2);
-  cairo_set_line_width(cr, 1.0);
 
   /* Draws x and y axis */
   cairo_set_source_rgb (cr, RGB_GREEN);
