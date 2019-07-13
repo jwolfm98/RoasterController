@@ -53,10 +53,10 @@ TODO:
 #define AXIS_LENGTH_TIME(x)      (x - (AXIS_GAP_TEMP_BURN * 2))
 #define AXIS_LENGTH_TEMP_BURN(y) (y - AXIS_GAP_TIME - (AXIS_MARGIN * y))
 
-struct POINT {
+typedef struct _POINT 
 	long x;
 	long y;
-};
+} POINT;
 
 static long timeAxisLength;
 static long tempBurnAxisLength;
