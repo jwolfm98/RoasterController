@@ -239,6 +239,7 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
 
 	cairo_set_source_rgb(cr, RGB_BLACK);
 	cairo_rectangle(cr, originPoint.x, originPoint.y, endPoint.x, endPoint.y);
+	cairo_stroke();
 
   //TODO: Insert grid labels
   //
@@ -262,6 +263,7 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
       cairo_line_to(cr, scaleTime(i + 1, da.width), scaleTemp(bTemps[i + 1], da.height));
     }
   }
+	cairo_stroke(cr);
 
   return FALSE;
 }
