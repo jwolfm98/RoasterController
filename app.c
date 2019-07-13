@@ -36,13 +36,13 @@ TODO:
 // Define width of the gap between the drawing edge and the Axis line,
 // where TEMP_BURN is the gap between the left edge and the start of the TIME line
 // and TIME is the gap between the bottom edge and the start of the TEMP and BURNER lines.
-#define AXIS_GAP_TIME
-#define AXIS_GAP_TEMP_BURN
+#define AXIS_GAP_TIME      100.0
+#define AXIS_GAP_TEMP_BURN 100.0
 
 // Define number of tick lines for each Axis
-#define AXIS_TICKS_TIME
-#define AXIS_TICKS_TEMP
-#define AXIS_TICKS_BURN
+#define AXIS_TICKS_TIME 10
+#define AXIS_TICKS_TEMP 10
+#define AXIS_TICKS_BURN 10
 
 // Define graphing area parameters
 
@@ -53,7 +53,7 @@ TODO:
 #define AXIS_LENGTH_TIME(x)      (x - (AXIS_GAP_TEMP_BURN * 2))
 #define AXIS_LENGTH_TEMP_BURN(y) (y - AXIS_GAP_TIME - (AXIS_MARGIN * y))
 
-typedef struct _POINT 
+typedef struct _POINT {
 	long x;
 	long y;
 } POINT;
@@ -239,7 +239,7 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
 
 	cairo_set_source_rgb(cr, RGB_BLACK);
 	cairo_rectangle(cr, originPoint.x, originPoint.y, endPoint.x, endPoint.y);
-	cairo_stroke();
+	cairo_stroke(cr);
 
   //TODO: Insert grid labels
   //
