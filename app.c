@@ -12,18 +12,10 @@ TODO:
 #include <gtk/gtk.h>
 #include <math.h>
 #include <cairo.h>
+#include "chart.h"
 #include "roasterSettings.h"
 #include "roastEvent.h"
 #include "app.h"
-
-#define RGB_BLACK   0,   0,   0
-#define RGB_RED   255,   0,   0
-#define RGB_GREEN   0, 255,   0
-#define RGB_BLUE    0,   0, 255
-#define RGB_WHITE 255, 255, 255
-
-#define ZOOM_X 1.0
-#define ZOOM_Y 1.0
 
 //TODO:
 //
@@ -215,45 +207,7 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
   /* Determine GtkDrawingArea dimensions */
   gdk_window_get_geometry(window, &da.x, &da.y, &da.width, &da.height);
 
-	//Draw on a white background
-  //TODO: Color grid label backgrounds to the programs "grey"
-  cairo_set_source_rgb(cr, RGB_WHITE);
-  cairo_paint(cr);
-
-  /* Change the transformation matrix */
-  cairo_translate(cr, 0.0, da.height);
-  cairo_scale(cr, ZOOM_X, -ZOOM_Y);
-  
-	/* Determine the data points to calculate (ie. those in the clipping zone */
-  cairo_device_to_user_distance(cr, &dx, &dy);
-  cairo_set_line_width(cr, 1.0);
-	
-	/* Setup chart data area display dimensions */
-	originPoint.x = AXIS_GAP_TEMP_BURN;
-	originPoint.y = AXIS_GAP_TIME;
-	endPoint.x    = AXIS_LENGTH_TIME(da.width) + originPoint.x;
-	endPoint.y    = AXIS_LENGTH_TEMP_BURN(da.height) + originPoint.y;
- 
- //TODO can we assign clip at a later time to ensure the live graph doesn't clip? or is does this need a separate handler?
-	cairo_clip_extents(cr, &clip_x1, &clip_y1, &clip_x2, &clip_y2);
-
-	cairo_set_source_rgb(cr, RGB_BLACK);
-	cairo_rectangle(cr, originPoint.x, originPoint.y, endPoint.x, endPoint.y);
-	cairo_stroke(cr);
-
-  //TODO: Insert grid labels
-  //
-  //
-  //TODO: Color remaining graph area to white
-  //
-  //
-  //TODO: Draw grid lines
-  //
-  //
-  //TODO: Rescale drawing area for grah drawing
-  //
-  //
-
+	chartInit(cr, da.width, da.height);
 
   /* Draws x and y axis */
   cairo_set_source_rgb (cr, RGB_GREEN);
