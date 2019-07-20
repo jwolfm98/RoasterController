@@ -22,6 +22,10 @@ OBS=./objects
 
 default: all
 
+chart.o : chart.c
+	echo Building Chart Utility
+	$(CC) $(CFLAGS) -c chart.c -o $(OBS)chart.o
+
 roasterSettings.o: roasterSettings.c
 	echo Building Roaster Settings Module
 	$(CC) $(CFLAGS) -c roasterSettings.c -o $(OBS)roasterSettings.o
@@ -38,9 +42,9 @@ main.o: main.c
 	echo Building Main
 	$(CC) $(CFLAGS) -c main.c -o $(OBS)main.o
 
-all: roasterSettings.o roastEvent.o app.o main.o
+all: chart.o roasterSettings.o roastEvent.o app.o main.o
 	echo Building Binary
-	$(CC) $(CFLAGS) $(OBS)main.o $(OBS)roastEvent.o $(OBS)roasterSettings.o $(OBS)app.o -o roasterProgram
+	$(CC) $(CFLAGS) $(OBS)main.o $(OBS)roastEvent.o $(OBS)roasterSettings.o $(OBS)app.o $(OBS)chart.o -o roasterProgram
 
 .PHONY: all
 

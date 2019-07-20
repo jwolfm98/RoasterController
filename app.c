@@ -46,14 +46,14 @@ TODO:
 #define AXIS_LENGTH_TEMP_BURN(y) (y - AXIS_GAP_TIME - (AXIS_MARGIN * y))
 
 typedef struct _POINT {
-	long x;
-	long y;
+  long x;
+  long y;
 } POINT;
 
-static long timeAxisLength;
-static long tempBurnAxisLength;
-static POINT originPoint; //x is to width as y is to height (of drawing area)
-static POINT endPoint;    //opposite end of graph rectangle
+//static long  timeAxisLength;
+//static long  tempBurnAxisLength;
+//static POINT originPoint; //x is to width as y is to height (of drawing area)
+//static POINT endPoint;    //opposite end of graph rectangle
 
 static long  practiceSeconds = 60 * 13; //15 minutes
 static float bTemps[1200], eTemps[1200], bCommand[1200];
@@ -61,7 +61,7 @@ static float bMin, bMax;
 static long  timeConstraint;
 static long  endOfGraphBuffer = 30; //seconds
 
-static long  tempRangeMin = 150, tempRangeMax = 500;
+static long  tempRangeMin = 250, tempRangeMax = 450;
 static long  deltaTempRangeMin = 0, deltaTempRangeMax = 60;
 static long  timeMax = 60 * 15;
 
@@ -200,14 +200,21 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
   /* Initialize drawing area */
   GdkRectangle da;
   GdkWindow *window = gtk_widget_get_window(widget);
-  /* Pixels between each point */
-  gdouble dx = 1.0, dy = 1.0;
-  gdouble i, clip_x1 = 0.0, clip_y1 = 0.0, clip_x2 = 0.0, clip_y2 = 0.0;
 
   /* Determine GtkDrawingArea dimensions */
   gdk_window_get_geometry(window, &da.x, &da.y, &da.width, &da.height);
 
-	chartInit(cr, da.width, da.height);
+  chartInit(cr,
+            (uint32_t)da.width,
+            (uint32_t)da.height,
+            8,  /* verticalTicks */
+            15,  /* horizontalTicks */
+            1,   /* gridLines */
+            tempRangeMax, /* leftVerticalMax */
+            tempRangeMin, /* leftVerticalMin */
+            deltaTempRangeMax,  /* rightVerticalMax */
+            deltaTempRangeMin,  /* rightVeritcalMin */
+            timeMax); /* horizontalStartingMax */
 
   /* Draws x and y axis */
   cairo_set_source_rgb (cr, RGB_GREEN);
@@ -217,7 +224,7 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
       cairo_line_to(cr, scaleTime(i + 1, da.width), scaleTemp(bTemps[i + 1], da.height));
     }
   }
-	cairo_stroke(cr);
+  cairo_stroke(cr);
 
   return FALSE;
 }
