@@ -216,6 +216,8 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
             deltaTempRangeMin,  /* rightVeritcalMin */
             timeMax); /* horizontalStartingMax */
 
+  gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("%d", da.width));
+
   /* Draws x and y axis */
   cairo_set_source_rgb (cr, RGB_GREEN);
   for (long i = 0; i < practiceSeconds; i++) {

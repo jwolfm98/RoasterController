@@ -4,8 +4,13 @@
 #include <cairo.h>
 #include <math.h>
 
-#define CHART_MARGIN_VERTICAL   140.0
-#define CHART_MARGIN_HORIZONTAL 180.0
+
+/* Margin Percentages */
+#define CHART_MARGIN_WIDTH         0.05
+#define CHART_MARGIN_HEIGHT_BOTTOM 0.10
+#define CHART_MARGIN_HEIGHT_TOP    0.05
+#define TICK_MARK_LENGTH           0.20
+#define TICK_LABEL_DISTANCE        0.40
 
 #define RGB_BLACK   0,   0,   0
 #define RGB_RED   1.0,   0,   0
@@ -17,6 +22,7 @@
 #define ALPHA_TRANSPARENT 0.0
 #define ALPHA_OPAQUE      1.0
 #define GTK_ALPHA         0.005
+#define ALPHA_GRID_LINE   0.4
 
 
 extern void chartInit(cairo_t *cr,
