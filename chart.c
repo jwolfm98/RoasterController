@@ -144,6 +144,12 @@ void getTickString(char* ret, uint8_t tick, uint32_t start, uint32_t step) {
   sprintf(ret, "%d", value);
 }
 
+
+//TODO: ladder initial x.y should refer the a point on the edge of the graph, text and tick marks should be offset from there.
+
+
+
+
 //TODO: Text Offset should be based on width of vertical column
 //TODO: Tick line length should be based on a percentage of the vertical column width size
 void leftVerticalLadder(cairo_t *cr, uint32_t minValue, uint32_t maxValue, uint32_t tickCount) {
@@ -207,6 +213,7 @@ void rightVerticalLadder(cairo_t *cr, uint32_t minValue, uint32_t maxValue, uint
     cairo_text_extents(cr, tickLabel, &extents);
 
     /* Set Location */
+    //TODO: change TICK_MARK_LENGTH to TICK_LABEL_DISTANCE and adjust accordingly
     textX = daRightVColOriginX + ((daWidth - daRightVColOriginX) * (TICK_MARK_LENGTH + 0.05));
     textY = (chartEndPointY) - (((chartEndPointY - chartOriginY) / tickCount) * i) - (extents.height/2 + extents.y_bearing);
 
@@ -243,7 +250,7 @@ void horizontalLadder(cairo_t *cr, uint32_t minValue, uint32_t maxValue, uint32_
     /* Set Location */
     //textX = daLeftVColEndPointX;
     //textY = (chartEndPointY) - (((chartEndPointY - chartOriginY) / tickCount) * i) - (extents.height/2 + extents.y_bearing);
-    textX = chartOriginX - (((chartEndPointX - chartOriginX) / tickCount) * i) - (extents.width/2 + extents.x_bearing);
+    textX = chartOriginX + (((chartEndPointX - chartOriginX) / tickCount) * i);
     textY = chartOriginY;
 
     /* Draw Text */
