@@ -10,7 +10,7 @@
 #define CHART_MARGIN_HEIGHT_BOTTOM 0.10
 #define CHART_MARGIN_HEIGHT_TOP    0.05
 #define TICK_MARK_LENGTH           0.20
-#define TICK_LABEL_DISTANCE        0.40
+#define TICK_LABEL_DISTANCE        0.50
 
 #define RGB_BLACK   0,   0,   0
 #define RGB_RED   1.0,   0,   0
@@ -36,4 +36,12 @@ extern void chartInit(cairo_t *cr,
              uint32_t rightVerticalMax,     /* Right Vertical max number      */
              uint32_t rightVerticalMin,     /* Right Veritcal min number      */
              uint32_t horizontalStartingMax); /* Horizontal starting max number */
+
+extern void plot(int32_t *data,
+                 float    *time,
+                 uint32_t  length,
+                 float     R,
+                 float     G,
+                 float     B,
+                 float     A);
 
