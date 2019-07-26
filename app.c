@@ -12,10 +12,18 @@ TODO:
 #include <gtk/gtk.h>
 #include <math.h>
 #include <cairo.h>
+#include <malloc.h>
+#include <string.h>
+#include "deviceHandler.h"
 #include "chart.h"
 #include "roasterSettings.h"
 #include "roastEvent.h"
 #include "app.h"
+
+
+char *defaultDevice = "/dev/ttyUSB1";
+char *message;
+
 
 //TODO:
 //
@@ -45,16 +53,6 @@ TODO:
 #define AXIS_LENGTH_TIME(x)      (x - (AXIS_GAP_TEMP_BURN * 2))
 #define AXIS_LENGTH_TEMP_BURN(y) (y - AXIS_GAP_TIME - (AXIS_MARGIN * y))
 
-typedef struct _POINT {
-  long x;
-  long y;
-} POINT;
-
-//static long  timeAxisLength;
-//static long  tempBurnAxisLength;
-//static POINT originPoint; //x is to width as y is to height (of drawing area)
-//static POINT endPoint;    //opposite end of graph rectangle
-
 static long  practiceSeconds = 60 * 13; //15 minutes
 static float bTemps[1200], eTemps[1200], bCommand[1200];
 static float bMin, bMax;
@@ -70,6 +68,7 @@ RoasterDataPoints     *rdp;
 
 double burnCommand = 0.0;
 static long secExpired = 0;
+
 
 void setupPracticeGraph() {
   float testVal = 200.0;
@@ -94,6 +93,7 @@ void setupPracticeGraph() {
  * This loop is responsible for handling I/O to the hardware, graphing the data received
  * and storing this data in memory for saving to file */
 void roastEventGraph() {
+
   while (isRoasting()) {
 
 
@@ -116,6 +116,7 @@ gboolean roasterClockUpdate(gpointer data) {
     sec = secExpired % 60;
     min = secExpired / 60;
     gtk_label_set_label(GTK_LABEL(gtk_lblTime), g_strdup_printf("%02d:%02d", min, sec));
+    gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("%s", message));
   }
   return isRoasting();
 }
@@ -216,7 +217,6 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
             deltaTempRangeMin,  /* rightVeritcalMin */
             timeMax); /* horizontalStartingMax */
 
-  gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("%d", da.width));
 
   /* Draws x and y axis */
   cairo_set_source_rgb (cr, RGB_GREEN);
@@ -236,8 +236,27 @@ void quitApplication(GSimpleAction *action, GVariant *parameter, gpointer data) 
   g_application_quit(application);
 }
 
+gboolean parseNewDataFromDevice(gpointer data) {
+  char *message = (char *)data;
+  gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("Message: %s", message));
+  return TRUE;
+}
+
+void finishProgramSetup() {
+
+  if (!deviceParserInit(defaultDevice, parseNewDataFromDevice, NULL)) {
+    gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("Failed to open device handler."));
+  }
+  else {
+    gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("Opened device handler."));
+  }
+
+}
+
+
 static void _activate (GtkApplication *app, gpointer userData) {
   GtkBuilder *builder;
+  FILE *settingsFile;
 
   /* Setup action for file menu item 'quit' */
   actQuit = g_simple_action_new("quit", NULL);
@@ -292,8 +311,7 @@ static void _activate (GtkApplication *app, gpointer userData) {
   /* Setup graph drawing signal with initial drawing */
   g_signal_connect(G_OBJECT(gtk_draGraph), "draw", G_CALLBACK(on_draGraph_draw), NULL);
 
-  //TODO: Remove when graph is working.
-  setupPracticeGraph();
+  finishProgramSetup();
 
 }
 

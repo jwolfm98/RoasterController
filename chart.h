@@ -37,7 +37,7 @@ extern void chartInit(cairo_t *cr,
              uint32_t rightVerticalMin,     /* Right Veritcal min number      */
              uint32_t horizontalStartingMax); /* Horizontal starting max number */
 
-extern void plot(int32_t *data,
+extern void plot(int32_t  *data,
                  float    *time,
                  uint32_t  length,
                  float     R,

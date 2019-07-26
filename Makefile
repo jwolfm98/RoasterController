@@ -22,6 +22,10 @@ OBS=./objects
 
 default: all
 
+deviceHandler.o : deviceHandler.c
+	echo Building Device Handler
+	$(CC) $(CFLAGS) -c deviceHandler.c -o $(OBS)deviceHandler.o
+
 chart.o : chart.c
 	echo Building Chart Utility
 	$(CC) $(CFLAGS) -c chart.c -o $(OBS)chart.o
@@ -42,9 +46,9 @@ main.o: main.c
 	echo Building Main
 	$(CC) $(CFLAGS) -c main.c -o $(OBS)main.o
 
-all: chart.o roasterSettings.o roastEvent.o app.o main.o
+all: deviceHandler.o chart.o roasterSettings.o roastEvent.o app.o main.o
 	echo Building Binary
-	$(CC) $(CFLAGS) $(OBS)main.o $(OBS)roastEvent.o $(OBS)roasterSettings.o $(OBS)app.o $(OBS)chart.o -o roasterProgram
+	$(CC) $(CFLAGS) $(OBS)main.o $(OBS)roastEvent.o $(OBS)roasterSettings.o $(OBS)app.o $(OBS)chart.o $(OBS)deviceHandler.o -o roasterProgram
 
 .PHONY: all
 

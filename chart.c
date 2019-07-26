@@ -1,4 +1,5 @@
 //TODO:: OriginY of the charting area is actually at the top and endpoint is at the bottom
+//i
 //          meanign the charting area is actually being drawn from the top left corner
 //          to the bottom right corner. This is why coordinates are all screwy. Moving to
 //          a proper matrix will not only resolve this, but give more scalability to graphing
@@ -14,8 +15,6 @@
 const uint32_t const len = 10;
 int32_t d[10];
 float   t[10];
-
-
 
 cairo_t *cr;
 
@@ -77,9 +76,9 @@ void chartInit(cairo_t *_cr,
   double   clip3       =  0.0;
   double   clip4       =  0.0;
 
-  double textX;
-  double textY;
-  cairo_text_extents_t extents;
+  //double textX;
+  //double textY;
+  //cairo_text_extents_t extents;
 
   /* Setup definitions for chart drawing area */
   daWidth  = width;
@@ -105,10 +104,7 @@ void chartInit(cairo_t *_cr,
 
 
 
-
-
   /*** Setup charting area ***/
-
 
   /* Charting area is drawn from top left to bottom right
    *__________________________________________
@@ -131,7 +127,7 @@ void chartInit(cairo_t *_cr,
   chartEndPointY = (uint32_t)floor(height - (double)(CHART_MARGIN_HEIGHT_BOTTOM * height +
                                                      CHART_MARGIN_HEIGHT_TOP    * height));
 
-  chartEndAbsoluteX = (uint32_t)floor(width  - (double)(CHART_MARGIN_WIDTH      * width));
+  chartEndAbsoluteX = (uint32_t)floor(width  - (double)(CHART_MARGIN_WIDTH         * width));
   chartEndAbsoluteY = (uint32_t)floor(height - (double)(CHART_MARGIN_HEIGHT_BOTTOM * height));
 
   /* Left Vertical Column Ladder Parameters */
@@ -139,7 +135,7 @@ void chartInit(cairo_t *_cr,
   daLeftVColEndPointY = chartOriginY;
   daLeftVColWidth     = daLeftVColEndPointX;
   daLeftVColHeight    = (uint32_t)(floor((double)(CHART_MARGIN_HEIGHT_BOTTOM * height)) -
-                                 floor((double)(CHART_MARGIN_HEIGHT_TOP * height)));
+                                   floor((double)(CHART_MARGIN_HEIGHT_TOP    * height)));
 
   /* Right Vertical Column Ladder Parameters */
   daRightVColOriginX = (uint32_t)floor(width  - (double)(CHART_MARGIN_WIDTH  * width));
@@ -162,9 +158,9 @@ void chartInit(cairo_t *_cr,
   cairo_translate(cr, (double)0.0,    (double)height);
   cairo_scale    (cr, scaleX, scaleY);
 
-  leftVerticalLadder (leftVerticalMin, leftVerticalMax, verticalTicks);
-  rightVerticalLadder(rightVerticalMin, rightVerticalMax, verticalTicks);
-  horizontalLadder   (0, horizontalStartingMax, horizontalStartingMax);
+  leftVerticalLadder (leftVerticalMin,  leftVerticalMax,       verticalTicks);
+  rightVerticalLadder(rightVerticalMin, rightVerticalMax,      verticalTicks);
+  horizontalLadder   (0,                horizontalStartingMax, horizontalStartingMax);
 
 
   plot(d, t, len, RGB_BLACK, ALPHA_OPAQUE);
@@ -173,9 +169,9 @@ void chartInit(cairo_t *_cr,
   cairo_translate(cr, (double)0.0, (double)height);
   cairo_scale    (cr, scaleX, scaleY);
 
-    /* TODO: Draw Vertical Lines */
+  /* TODO: Draw Vertical Lines */
 
-    /* TODO: Draw Horizontal Lines */
+  /* TODO: Draw Horizontal Lines */
 
   //
   //TODO: Color remaining graph area to white
@@ -231,7 +227,7 @@ void leftVerticalLadder(uint32_t minValue, uint32_t maxValue, uint32_t tickCount
 
     /* Draw Tick Line */
     cairo_set_line_width(cr, 2);
-    cairo_move_to(cr, daLeftVColEndPointX,    textY-2);
+    cairo_move_to(cr, daLeftVColEndPointX, textY-2);
     cairo_line_to(cr, daLeftVColEndPointX - (daLeftVColEndPointX * TICK_MARK_LENGTH), textY-2);
     cairo_stroke(cr);
 
