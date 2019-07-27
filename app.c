@@ -7,13 +7,23 @@ TODO:
   -- Timer has a race condition that enables double incrementing
 
 */
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <stdio.h>
-#include <gtk/gtk.h>
-#include <math.h>
-#include <cairo.h>
 #include <malloc.h>
 #include <string.h>
+#include <math.h>
+
+#include <gtk/gtk.h>
+
+#include <glib.h>
+#include <glib-unix.h>
+
+#include <cairo.h>
+
 #include "deviceHandler.h"
 #include "chart.h"
 #include "roasterSettings.h"
@@ -21,8 +31,15 @@ TODO:
 #include "app.h"
 
 
-char *defaultDevice = "/dev/ttyUSB1";
+GMainLoop *loop;
+GSource   *deviceHandlerSource; /* Gsource for the device handler */
+
+GIOChannel *deviceChannel;
+
+char *defaultDevice = "/dev/ttyUSB0";
+int   device;
 char *message;
+int   _testVal;
 
 
 //TODO:
@@ -234,6 +251,8 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
 void quitApplication(GSimpleAction *action, GVariant *parameter, gpointer data) {
   GApplication *application = data;
   g_application_quit(application);
+  printf("Closing Device\n");
+  close(device);
 }
 
 gboolean parseNewDataFromDevice(gpointer data) {
@@ -243,20 +262,27 @@ gboolean parseNewDataFromDevice(gpointer data) {
 }
 
 void finishProgramSetup() {
+  deviceParserInit(defaultDevice);
 
-  if (!deviceParserInit(defaultDevice, parseNewDataFromDevice, NULL)) {
+  device = open(defaultDevice, O_RDONLY);
+
+  if (device < 0) {
     gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("Failed to open device handler."));
   }
   else {
     gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("Opened device handler."));
   }
 
+  deviceChannel = g_io_channel_unix_new(device);
+  g_io_add_watch(deviceChannel, G_IO_IN, deviceParser, &_testVal);
+  g_io_channel_unref(deviceChannel);
+
 }
 
 
 static void _activate (GtkApplication *app, gpointer userData) {
   GtkBuilder *builder;
-  FILE *settingsFile;
+  //FILE *settingsFile;
 
   /* Setup action for file menu item 'quit' */
   actQuit = g_simple_action_new("quit", NULL);
