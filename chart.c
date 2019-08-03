@@ -56,14 +56,16 @@ const char *burnerValue_string2 = "Command";
 void chartInit(cairo_t *_cr,
                uint32_t width,                 /* Widith of drawing area         */
                uint32_t height,                /* Height of drawing area         */
+               int32_t  startTime,
+               int32_t  endTime,
+               uint8_t  separateBurnerChart,
                uint8_t  verticalTicks,         /* Vertical tick count            */
                uint8_t  horizontalTicks,       /* Horizontal tick count          */
                uint8_t  gridLines,             /* Grid lines on/off              */
                uint32_t leftVerticalMax,       /* Left Vertical max number       */
                uint32_t leftVerticalMin,       /* Left Vertical min number       */
                uint32_t rightVerticalMax,      /* Right Vertical max number      */
-               uint32_t rightVerticalMin,      /* Right Veritcal min number      */
-               uint32_t horizontalStartingMax) /* Horizontal starting max number */
+               uint32_t rightVerticalMin)      /* Right Veritcal min number      */
 {
   cr = _cr;
   double   scaleX      =  1.0;
@@ -153,6 +155,13 @@ void chartInit(cairo_t *_cr,
   cairo_fill_preserve (cr);
   cairo_set_source_rgb(cr, RGB_BLACK);
   cairo_stroke        (cr);
+  if (separateBurnerChart) {
+    cairo_rectangle     (cr, chartOriginX, chartOriginY, chartEndPointX, chartEndPointY * BURNER_CHART_PERCENT);
+    cairo_set_source_rgb(cr, RGB_WHITE);
+    cairo_fill_preserve (cr);
+    cairo_set_source_rgb(cr, RGB_BLACK);
+    cairo_stroke        (cr);
+  }
 
   /* Invert translation to make drawing easier */
   cairo_translate(cr, (double)0.0,    (double)height);
@@ -160,7 +169,7 @@ void chartInit(cairo_t *_cr,
 
   leftVerticalLadder (leftVerticalMin,  leftVerticalMax,       verticalTicks);
   rightVerticalLadder(rightVerticalMin, rightVerticalMax,      verticalTicks);
-  horizontalLadder   (0,                horizontalStartingMax, horizontalStartingMax);
+  horizontalLadder   (startTime,        endTime/60);
 
 
   plot(d, t, len, RGB_BLACK, ALPHA_OPAQUE);
@@ -283,16 +292,16 @@ void rightVerticalLadder(uint32_t minValue, uint32_t maxValue, uint32_t tickCoun
 //        2. Chart shall plot from 0 seconds to -X seconds, is the minimum value sent to the horizontal ladder function
 //        3. The chart shall plot data from 0 to the aforementioned -X until the time data becomes positive
 //
-void horizontalLadder(uint32_t minValue, uint32_t maxValue, uint32_t tickCount) {
+void horizontalLadder(uint32_t minValue, uint32_t maxValue) {
   cairo_text_extents_t extents; /* stores text alignment variables */
   double tickX; /* initial position for the tick mark */
   double tickY; /* initial position for the tick mark */
-  timeScale = tickCount / 60; /* all time is in seconds, label graph in minutes */
+  timeScale = maxValue; /* all time is in seconds, label graph in minutes */
 
   /* Draw Time ticks */
-  for(int i = 0; i <= timeScale; i++) {
+  for(int i = 0; i <= maxValue; i++) {
     char tickLabel[5];
-    getTickString(tickLabel, i, minValue, ((maxValue - minValue) / tickCount));
+    getTickString(tickLabel, i, 0, maxValue);
 
     /* Set style */
     cairo_set_source_rgba (cr, RGB_BLACK, 1.0);
@@ -327,16 +336,34 @@ void horizontalLadder(uint32_t minValue, uint32_t maxValue, uint32_t tickCount) 
   }
 }
 
+gboolean updateGraph(gpointer data) {
+  RoasterDataPointer *rdp = (RoasterDataPoints *)data;
+  if (rdp->hasNewData()) {
+    rdp->dataGraphed();
+  }
+}
+
 void plot(
-  int32_t  *data,
-  float    *time,
-  uint32_t  length,
-  float     R,
-  float     G,
-  float     B,
-  float     A)
+  lineType  type,
+  int32_t   data,
+  int32_t   time)
 {
-  cairo_set_source_rgba(cr, R, G, B, A);
+  switch (type) {
+    case LINE_BEAN_TEMP:
+      cairo_set_source_rgba(cr, 1.0, 0.0, 0.0, 1.0);
+
+      break;
+    case LINE_ENV_TEMP:
+      cairo_set_source_rgba(cr, 0.0, 1.0, 0.0, 1.0);
+
+      break;
+    case LINE_BURNER_VALUE:
+      cairo_set_source_rgba(cr, 0.5, 0.0, 0.5, 1.0);
+
+      break;
+    default:
+      break
+  }
   for (uint32_t i = 0; i < length - 1; i++) {
     cairo_move_to(cr, timeToXPlot(time[i]), data[i]);
     cairo_line_to(cr, timeToXPlot(time[i+1]), data[i+1]);

@@ -3,11 +3,34 @@
 #include <stdint.h>
 #include "common.h"
 
-typedef struct RoasterGlobalSettings  RoasterGlobalSettings;
-typedef struct RoasterDataPoints      RoasterDataPoints;
 
-extern void    rsNew                (struct RoasterGlobalSettings **rs);
-extern double  getBurnerRange       (struct RoasterGlobalSettings *rs);
-extern uint8_t setBurnerMinMaxValues(struct RoasterGlobalSettings *rs, const double min, const double max); 
-extern uint8_t setTempReadingCount  (struct RoasterGlobalSettings *rs, const uint8_t rc);
-extern uint8_t setDataPointInterval (struct RoasterGlobalSettings *rs, const uint8_t dpi);
+typedef enum {
+  SETTINGS_INIT_DEFAULT,
+  SETTINGS_INIT_LOADED,
+  SETTINGS_INIT_CRITICAL
+} SETTINGS_INIT;
+
+typedef struct COLORS {
+  float RED;
+  float GREEN;
+  float BLUE;
+  float ALPHA;
+} COLORS;
+
+SETTINGS_INIT roasterSettingsInit();
+
+int32_t  getTempMin();
+int32_t  getTempMax();
+uint32_t getInitTimeSpan();
+uint32_t getPreRoastDataSpan();
+uint32_t getDeltaSpan();
+int32_t  getDeltaRate();
+uint32_t getBurnerMin();
+uint32_t getBurernMax();
+
+uint8_t  updateGraphSettingsNow();
+
+COLORS   getBeanTempColor();
+COLORS   getBeanDeltaColor();
+COLORS   getEnvTempColor();
+COLORS   get(BurnerValColor);

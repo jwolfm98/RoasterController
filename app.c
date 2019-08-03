@@ -31,17 +31,6 @@ TODO:
 #include "app.h"
 
 
-GMainLoop *loop;
-GSource   *deviceHandlerSource; /* Gsource for the device handler */
-
-GIOChannel *deviceChannel;
-
-char *defaultDevice = "/dev/ttyUSB0";
-int   device;
-char *message;
-int   _testVal;
-
-
 //TODO:
 //
 // Define Axis graphics parameters
@@ -201,6 +190,7 @@ gchar* on_sclBurner_format_value (GtkScale *scale, gdouble value, gpointer user_
   return g_strdup_printf("%.1f", value);
 }
 
+#if 0
 gfloat f(gfloat x) {
   return (0.03 * pow(x,3));
 }
@@ -213,6 +203,7 @@ gfloat scaleTemp(long temp, long maxH){
 gfloat scaleTime(long time, long scale) {
   return ((float)(scale / timeMax) * time);
 }
+#endif
 
 gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
   /* Initialize drawing area */
@@ -223,18 +214,22 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
   gdk_window_get_geometry(window, &da.x, &da.y, &da.width, &da.height);
 
   chartInit(cr,
-            (uint32_t)da.width,
-            (uint32_t)da.height,
-            8,  /* verticalTicks */
-            15,  /* horizontalTicks */
-            1,   /* gridLines */
-            tempRangeMax, /* leftVerticalMax */
-            tempRangeMin, /* leftVerticalMin */
-            deltaTempRangeMax,  /* rightVerticalMax */
-            deltaTempRangeMin,  /* rightVeritcalMin */
-            timeMax); /* horizontalStartingMax */
+            (uint32_t)da.width,   /* Total width of chart area  */
+            (uint32_t)da.height,  /* Total height of chart area */
+            -20,                  /* Start time of the graph    */
+            60 * 11,              /* End time of the graph    */
+            TRUE,                 /* Separate burner command chart */
+            8,                    /* Vertical Tick count        */
+            15,                   /* Horizontal Tick count      */
+            1,                    /* Grid lines */
+            tempRangeMax,         /* leftVerticalMax */
+            tempRangeMin,         /* leftVerticalMin */
+            deltaTempRangeMax,    /* rightVerticalMax */
+            deltaTempRangeMin     /* rightVeritcalMin */
+            );
 
 
+#if 0
   /* Draws x and y axis */
   cairo_set_source_rgb (cr, RGB_GREEN);
   for (long i = 0; i < practiceSeconds; i++) {
@@ -244,38 +239,36 @@ gboolean on_draGraph_draw(GtkWidget* widget, cairo_t *cr,  gpointer data) {
     }
   }
   cairo_stroke(cr);
+#endif
 
   return FALSE;
 }
 
 void quitApplication(GSimpleAction *action, GVariant *parameter, gpointer data) {
   GApplication *application = data;
+  deviceParserDestroy();
   g_application_quit(application);
-  printf("Closing Device\n");
-  close(device);
-}
-
-gboolean parseNewDataFromDevice(gpointer data) {
-  char *message = (char *)data;
-  gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("Message: %s", message));
-  return TRUE;
 }
 
 void finishProgramSetup() {
-  deviceParserInit(defaultDevice);
 
-  device = open(defaultDevice, O_RDONLY);
+  /* initialize roaster settings */
+  roasterSettingsInit();
 
-  if (device < 0) {
-    gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("Failed to open device handler."));
+  /* initialize memory for holding data from roast event */
+  initRoasterEventData();
+
+  /* Setup device */
+  if (deviceParserInit(defaultDevice, rdp)) {
+    /* probably change this to a green status light somewhere else, but keep the error status message */
+    gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("Opened the default device."));
   }
   else {
-    gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("Opened device handler."));
+    /* potentiall add this to an array of status codes that gets updated every few seconds in order to display all current errors */
+    gtk_label_set_label(GTK_LABEL(gtk_lblStatusMessage), g_strdup_printf("Failed to open the default device. Check the device settings."));
   }
 
-  deviceChannel = g_io_channel_unix_new(device);
-  g_io_add_watch(deviceChannel, G_IO_IN, deviceParser, &_testVal);
-  g_io_channel_unref(deviceChannel);
+  g_idle_add(updateGraph, rdp);
 
 }
 
@@ -318,14 +311,6 @@ static void _activate (GtkApplication *app, gpointer userData) {
 
   /* free builder */
   g_object_unref(builder);
-
-  /* initialize roaster settings */
-  rsNew(&rs);
-  setBurnerMinMaxValues(rs, 0.0, 9.0);
-  gtk_range_set_range(GTK_RANGE(gtk_sclBurner), 0.0, 9.0);
-  gtk_range_set_increments(GTK_RANGE(gtk_sclBurner), 1.0, 1.0);
-  gtk_range_set_value(GTK_RANGE(gtk_sclBurner), 4.0);
-  stopRoasting();
 
   /* Show window */
   gtk_widget_show(GTK_WIDGET(window));
